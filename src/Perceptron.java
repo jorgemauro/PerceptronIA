@@ -5,6 +5,7 @@ import java.math.*;
 
 class Perceptron
 {
+
     static int MAX = 100;
     static double APRENDIZADO = 0.1;
     static int QTDINSTANCIA = 100;
