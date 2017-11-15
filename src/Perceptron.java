@@ -1,107 +1,179 @@
-import java.util.*;
-import java.io.*;
-import java.text.*;
-import java.math.*;
 
-class Perceptron
-{
 
-    static int MAX = 100;
-    static double APRENDIZADO = 0.1;
-    static int QTDINSTANCIA = 100;
-    static int t = 0;
-    public static void main(String args[]){
-        //three variables (features)
-        double[] x = new double [QTDINSTANCIA];
-        double[] y = new double [QTDINSTANCIA];
-        double[] z = new double [QTDINSTANCIA];
-        int[] outputs = new int [QTDINSTANCIA];
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 
-        //fifty random points of class 1
-        for(int i = 0; i < QTDINSTANCIA/2; i++){
-            x[i] = nRandom(5 , 10);
-            y[i] = nRandom(4 , 8);
-            z[i] = nRandom(2 , 9);
-            outputs[i] = 1;
-            System.out.println(x[i]+"\t"+y[i]+"\t"+z[i]+"\t"+outputs[i]);
+public class Perceptron {
+
+    private double[] w = new double[3];
+
+    private double NET = 0;
+
+    private final int epocasMax = 1000;
+
+    private int count = 0;
+
+    private int[][] matrixLearning = new int[4][3];
+
+    public int getCount(){
+
+        return this.count;
+
+    }
+    Perceptron( int number) {
+        if(number ==1) {//or
+            this.matrixLearning[0][0] = 0;
+            this.matrixLearning[0][1] = 0;
+            this.matrixLearning[0][2] = 0;
+
+            this.matrixLearning[1][0] = 0;
+            this.matrixLearning[1][1] = 1;
+            this.matrixLearning[1][2] = 1;
+
+            this.matrixLearning[2][0] = 1;
+            this.matrixLearning[2][1] = 0;
+            this.matrixLearning[2][2] = 1;
+
+            this.matrixLearning[3][0] = 1;
+            this.matrixLearning[3][1] = 1;
+            this.matrixLearning[3][2] = 1;
+        }else if(number ==2) {//and
+            this.matrixLearning[0][0] = 0;
+            this.matrixLearning[0][1] = 0;
+            this.matrixLearning[0][2] = 0;
+
+            this.matrixLearning[1][0] = 0;
+            this.matrixLearning[1][1] = 1;
+            this.matrixLearning[1][2] = 0;
+
+            this.matrixLearning[2][0] = 1;
+            this.matrixLearning[2][1] = 0;
+            this.matrixLearning[2][2] = 0;
+
+            this.matrixLearning[3][0] = 1;
+            this.matrixLearning[3][1] = 1;
+            this.matrixLearning[3][2] = 1;
+        }else if(number ==3) { //xor
+            this.matrixLearning[0][0] = 0;
+            this.matrixLearning[0][1] = 0;
+            this.matrixLearning[0][2] = 0;
+
+            this.matrixLearning[1][0] = 0;
+            this.matrixLearning[1][1] = 1;
+            this.matrixLearning[1][2] = 1;
+
+            this.matrixLearning[2][0] = 1;
+            this.matrixLearning[2][1] = 0;
+            this.matrixLearning[2][2] = 1;
+
+            this.matrixLearning[3][0] = 1;
+            this.matrixLearning[3][1] = 1;
+            this.matrixLearning[3][2] = 0;
+        }
+        w[0] = 0;
+        w[1] = 0;
+        w[2]= 0;
+
+    }
+
+    int executar(int x1, int x2) {
+
+        NET = (x1 * w[0]) + (x2 * w[1]) + ((-1) * w[2]);
+
+        if (NET >= 0) {
+            return 1;
+        }
+        return 0;
+    }
+
+    public void doTraining() {
+
+        boolean training= true;
+        int out;
+
+        for (int i = 0; i < matrixLearning.length; i++) {
+            out = executar(matrixLearning[i][0], matrixLearning[i][1]);
+
+
+            if (out != matrixLearning[i][2]) {
+                correct(i, out);
+                training = false;
+            }
+        }
+        this.count++;
+
+        if((!training) && (this.count < this.epocasMax)) {
+            if(this.count==this.epocasMax-1){
+                System.out.println("cheguei no maximo de interações");
+            }
+            doTraining();
+
+
         }
 
-        //fifty random points of class 0
-        for(int i = 50; i < QTDINSTANCIA; i++){
-            x[i] = nRandom(-1 , 3);
-            y[i] = nRandom(-4 , 2);
-            z[i] = nRandom(-3 , 5);
-            outputs[i] = 0;
-            System.out.println(x[i]+"\t"+y[i]+"\t"+z[i]+"\t"+outputs[i]);
+    }
+
+
+    private void correct(int i, int out) {
+
+        w[0] = w[0] + ((matrixLearning[i][2] - out) * matrixLearning[i][0]);
+        w[1] = w[1] + ((matrixLearning[i][2] - out) * matrixLearning[i][1]);
+        w[2] = w[2] + ((matrixLearning[i][2] - out) * (-1));
+    }
+    private static int[] tranformaLinha(String linha){
+        String[]s=linha.split(" ");
+        int[] retorno= new int[s.length];
+        for(int i=0;i<s.length;i++){
+            retorno[i]=Integer.parseInt(s[i]);
         }
-
-        double[] pesos = new double[4];// 3 for input variables and one for bias
-        double localError, globalError;
-        int i, p, intera, output;
-
-        pesos[0] = nRandom(0,1);// w1
-        pesos[1] = nRandom(0,1);// w2
-        pesos[2] = nRandom(0,1);// w3
-        pesos[3] = nRandom(0,1);// this is the bias
-
-        intera = 0;
-        do {
-            intera++;
-            globalError = 0;
-            //loop through all instances (complete one epoch)
-            for (p = 0; p < QTDINSTANCIA; p++) {
-                // calculate predicted class
-                output = calculaSaida(t,pesos, x[p], y[p], z[p]);
-                // difference between predicted and actual class values
-                localError = outputs[p] - output;
-                //update pesos and bias
-                pesos[0] += APRENDIZADO * localError * x[p];
-                pesos[1] += APRENDIZADO * localError * y[p];
-                pesos[2] += APRENDIZADO * localError * z[p];
-                pesos[3] += APRENDIZADO * localError;
-                //summation of squared error (error value for all instances)
-                globalError += (localError*localError);
+        return retorno;
+    }
+    public static void main(String[] args) {
+     Perceptron p;
+        String linha;
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new FileReader("file.txt"));
+            int j=0;
+            while ((linha = br.readLine()) != null) {
+                System.out.println(linha);
+                String linhaLO=linha.toLowerCase();
+                if(linhaLO.toLowerCase().equals("and")){
+                    linha=br.readLine();
+                    p=new Perceptron(2);
+                }else if(linhaLO.equals("or")){
+                    linha=br.readLine();
+                    p=new Perceptron(1);
+                }else if(linha.equals("xor")){
+                    linha= br.readLine();
+                    p=new Perceptron(3);
+                }else{
+                    System.out.println("entrada invalida");
+                    break;
+                }
+                p.doTraining();
+                int[] analys=tranformaLinha(linha);
+                int exec=-1;
+                for(int i=0;i<analys.length;i++){
+                    if(exec==-1){
+                    exec=p.executar(analys[i],analys[i+1]);
+                    i=1;
+                    }else{
+                        exec=p.executar(exec,analys[i]);
+                    }
+                }
+                System.out.println("round"+j+": "+exec);
+                j++;
             }
 
-			/* Root Mean Squared Error */
-            System.out.println("intera "+intera+" : RMSE = "+Math.sqrt(globalError/QTDINSTANCIA));
-        } while (globalError != 0 && intera<=MAX);
-
-        System.out.println("\n=======\n Equação de fronteira de decisão:");
-        System.out.println(pesos[0] +"*x + "+pesos[1]+"*y +  "+pesos[2]+"*z + "+pesos[3]+" = 0");
-
-        //generate 10 new random points and check their classes
-        //notice the range of -10 and 10 means the new point could be of class 1 or 0
-        //-10 to 10 covers all the ranges we used in generating the 50 classes of 1's and 0's above
-        for(int j = 0; j < 10; j++){
-            double x1 = nRandom(-10 , 10);
-            double y1 = nRandom(-10 , 10);
-            double z1 = nRandom(-10 , 10);
-
-            output = calculaSaida(t,pesos, x1, y1, z1);
-            System.out.println("\n=======\n Novo Ponto:");
-            System.out.println("x = "+x1+",y = "+y1+ ",z = "+z1);
-            System.out.println("class = "+output);
-        }
-    }
-    public static double nRandom(int min , int max) {
-        DecimalFormat df = new DecimalFormat("#.####");
-        NumberFormat f= NumberFormat.getInstance();
-        double d = min + Math.random() * (max - min);
-        String s = df.format(d);
-        double x = 0;
-        try {
-            x = f.parse(s).doubleValue();
-        } catch (ParseException e) {
+            br.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        return x;
-    }
 
-    static int calculaSaida(int t, double pesos[], double x, double y, double z)
-    {
-        double sum = x * pesos[0] + y * pesos[1] + z * pesos[2] + pesos[3];
-        return (sum >= t) ? 1 : 0;
     }
-
 }
